@@ -133,11 +133,12 @@ public class Main {
                  .map(jarPath -> {
                      try {
                          LOGGER.info("Found pending update: " + jarPath);
-                         
+                        
                          // Extract version from filename (butterfly-X.Y.Z.jar)
                          String fileName = jarPath.getFileName().toString();
-                         String version = fileName.replaceAll("butterfly-|.jar", "");
-                         
+                         // Remove "butterfly-" prefix and ".jar" suffix
+                         String version = fileName.replaceAll("^butterfly-", "").replaceAll("\\.jar$", "");
+                        
                          UpdateInfo updateInfo = new UpdateInfo();
                          updateInfo.version = version;
                          

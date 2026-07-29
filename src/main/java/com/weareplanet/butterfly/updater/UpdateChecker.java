@@ -257,6 +257,12 @@ public class UpdateChecker {
     private Path getApplicationJar() throws Exception {
         String classPath = UpdateChecker.class.getProtectionDomain()
             .getCodeSource().getLocation().toURI().getPath();
+        
+        // On Windows, URI.getPath() returns /C:/path/to/file, remove leading slash
+        if (classPath.startsWith("/") && classPath.length() > 2 && classPath.charAt(2) == ':') {
+            classPath = classPath.substring(1);
+        }
+        
         return Paths.get(classPath);
     }
 
