@@ -4,7 +4,12 @@ import com.weareplanet.butterfly.updater.UpdateChecker;
 import com.weareplanet.butterfly.updater.UpdateInfo;
 import com.weareplanet.butterfly.ui.MainWindow;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main entry point for Butterfly application.
@@ -13,6 +18,7 @@ import java.util.Properties;
 public class Main {
     private static final String APP_NAME = "Butterfly";
     private static String APP_VERSION;
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     static {
         // Load version from properties file (injected by Maven)
@@ -39,6 +45,11 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("Starting " + APP_NAME + " v" + APP_VERSION);
+
+        // Check if there's a pending update from previous session
+        if (checkAndInstallPendingUpdate()) {
+            return; // Application will restart after update install
+        }
 
         // Initialize UI
         MainWindow mainWindow = new MainWindow(APP_NAME, APP_VERSION);
@@ -81,6 +92,7 @@ public class Main {
             @Override
             public void onDownloadComplete(UpdateInfo updateInfo, java.nio.file.Path jarPath) {
                 System.out.println("Download complete: " + jarPath);
+                mainWindow.showInstallUpdatePrompt(updateInfo, jarPath, checker);
             }
 
             @Override
@@ -102,4 +114,50 @@ public class Main {
             checker.shutdown();
         }));
     }
+
+     /**
+      * Check if there's a pending update to install from a previous session.
+      * @return true if an update was found and is being installed, false otherwise
+      */
+     private static boolean checkAndInstallPendingUpdate() {
+         try {
+             Path updateDir = Paths.get(System.getProperty("user.home"), ".butterfly", "updates");
+             if (!Files.exists(updateDir)) {
+                 return false;
+             }
+
+             // Find any JAR files in the updates directory
+             return Files.list(updateDir)
+                 .filter(p -> p.toString().endsWith(".jar"))
+                 .findFirst()
+                 .map(jarPath -> {
+                     try {
+                         LOGGER.info("Found pending update: " + jarPath);
+                         
+                         // Extract version from filename (butterfly-X.Y.Z.jar)
+                         String fileName = jarPath.getFileName().toString();
+                         String version = fileName.replaceAll("butterfly-|.jar", "");
+                         
+                         UpdateInfo updateInfo = new UpdateInfo();
+                         updateInfo.version = version;
+                         
+                         // Install the update
+                         UpdateChecker checker = new UpdateChecker(APP_VERSION);
+                         checker.installUpdate(updateInfo, jarPath);
+                         
+                         // Restart the application
+                         checker.restartApplication();
+                         
+                         return true;
+                     } catch (Exception e) {
+                         LOGGER.log(Level.WARNING, "Failed to install pending update", e);
+                         return false;
+                     }
+                 })
+                 .orElse(false);
+         } catch (Exception e) {
+             LOGGER.log(Level.WARNING, "Error checking for pending updates", e);
+             return false;
+         }
+     }
 }

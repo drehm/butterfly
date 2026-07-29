@@ -79,6 +79,33 @@ public class MainWindow extends JFrame {
         });
     }
 
+    public void showInstallUpdatePrompt(UpdateInfo updateInfo, java.nio.file.Path jarPath, com.weareplanet.butterfly.updater.UpdateChecker checker) {
+        SwingUtilities.invokeLater(() -> {
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Update downloaded successfully!\n\n"
+                        + "Current: " + appVersion + "\n"
+                        + "Available: " + updateInfo.version + "\n\n"
+                        + "Would you like to install and restart now?",
+                "Install Update",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                try {
+                    checker.installUpdate(updateInfo, jarPath);
+                    checker.restartApplication();
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this,
+                            "Failed to install update: " + e.getMessage(),
+                            "Installation Failed",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+    }
+
     private void setWindowIcons() {
         try {
             List<Image> icons = new ArrayList<>();
