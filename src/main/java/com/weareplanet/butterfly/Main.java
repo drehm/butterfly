@@ -66,7 +66,7 @@ public class Main {
             @Override
             public void onUpdateAvailable(UpdateInfo updateInfo) {
                 System.out.println("Update available: " + updateInfo.version);
-                mainWindow.showUpdateAvailableNotification(updateInfo);
+                //mainWindow.showUpdateAvailableNotification(updateInfo);
             }
 
             @Override
