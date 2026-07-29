@@ -16,10 +16,36 @@ try {
     exit 1
 }
 
-# Find JAVA_HOME
+# Find JAVA_HOME (skip javapath symlink, find actual JDK)
 $javaBin = (Get-Command java).Source
-$javaDir = Split-Path $javaBin
-$javaHome = Split-Path $javaDir
+Write-Host "[*] Java path: $javaBin" -ForegroundColor Gray
+
+# If it's Oracle's javapath, find actual JDK installation
+if ($javaBin -like "*javapath*") {
+    Write-Host "[*] Detected Oracle javapath symlink, searching for actual JDK..." -ForegroundColor Gray
+    
+    # Find installed JDK (prefer latest)
+    $jdkDirs = @()
+    foreach ($basePath in @("C:\Program Files\Java", "C:\Program Files (x86)\Java")) {
+        if (Test-Path $basePath) {
+            $jdks = Get-ChildItem $basePath -Directory -Filter "*jdk*" -ErrorAction SilentlyContinue
+            $jdks | ForEach-Object { $jdkDirs += $_.FullName }
+        }
+    }
+    
+    if ($jdkDirs) {
+        $javaHome = $jdkDirs | Sort-Object { [version]($_ -replace '[^0-9.]', '') } -Descending | Select-Object -First 1
+        Write-Host "[OK] Found actual JDK: $javaHome" -ForegroundColor Green
+    } else {
+        Write-Host "[ERROR] Could not find JDK installation in C:\Program Files\Java" -ForegroundColor Red
+        exit 1
+    }
+} else {
+    # For non-javapath installations
+    $javaDir = Split-Path $javaBin
+    $javaHome = Split-Path $javaDir
+}
+
 $env:JAVA_HOME = $javaHome
 Write-Host "[OK] Set JAVA_HOME = $javaHome" -ForegroundColor Green
 
