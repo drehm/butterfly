@@ -29,7 +29,24 @@ public class UpdateChecker {
 
     public UpdateChecker(String currentVersion) {
         this.currentVersion = currentVersion;
-        this.updateDir = Paths.get("update");
+        // Use absolute path relative to application JAR location
+        Path dir = null;
+        try {
+            Path appLocation = Paths.get(UpdateChecker.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath());
+            
+            // Handle Windows URI path with leading slash
+            if (appLocation.toString().startsWith("/") && appLocation.toString().length() > 2 && appLocation.toString().charAt(2) == ':') {
+                appLocation = Paths.get(appLocation.toString().substring(1));
+            }
+            
+            dir = appLocation.getParent().resolve("update");
+        } catch (Exception e) {
+            // Fallback to relative path if we can't determine app location
+            System.err.println("[UPDATE] Warning: Could not determine app location, using relative path: " + e.getMessage());
+            dir = Paths.get("update").toAbsolutePath();
+        }
+        this.updateDir = dir;
         ensureUpdateDirExists();
     }
 
@@ -242,10 +259,15 @@ public class UpdateChecker {
         Path appJar = getApplicationJar();
         Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
         
+        System.out.println("[UPDATE] Install stage 1: Moving downloaded JAR to .pending");
+        System.out.println("[UPDATE]   From: " + jarPath.toAbsolutePath());
+        System.out.println("[UPDATE]   To:   " + pendingJar.toAbsolutePath());
+        
         // Don't replace the current JAR (it's locked). Instead, stage it as .pending
         // The replacement will happen on next startup when the JVM has released the lock
         Files.move(jarPath, pendingJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         
+        System.out.println("[UPDATE] Install stage 1 complete! .pending file ready for next startup");
         LOGGER.info("Update staged for installation on next startup: " + pendingJar);
         
         if (listener != null) {
@@ -272,7 +294,9 @@ public class UpdateChecker {
             classPath = classPath.substring(1);
         }
         
-        return Paths.get(classPath);
+        Path result = Paths.get(classPath);
+        System.out.println("[UPDATE] Application JAR location: " + result.toAbsolutePath());
+        return result;
     }
 
     private boolean isNewerVersion(String newVersion, String currentVersion) {

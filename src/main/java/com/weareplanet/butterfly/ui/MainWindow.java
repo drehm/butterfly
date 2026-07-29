@@ -94,14 +94,20 @@ public class MainWindow extends JFrame {
 
             if (choice == JOptionPane.YES_OPTION) {
                 try {
+                    System.out.println("[UPDATE] User clicked Install. JAR path: " + jarPath.toAbsolutePath());
                     checker.installUpdate(updateInfo, jarPath);
+                    System.out.println("[UPDATE] Installation staged. Now restarting app...");
                     checker.restartApplication();
                 } catch (Exception e) {
+                    System.err.println("[UPDATE] Installation failed: " + e.getMessage());
+                    e.printStackTrace();
                     JOptionPane.showMessageDialog(this,
                             "Failed to install update: " + e.getMessage(),
                             "Installation Failed",
                             JOptionPane.ERROR_MESSAGE);
                 }
+            } else {
+                System.out.println("[UPDATE] User cancelled installation. Update will be applied on next restart.");
             }
         });
     }
