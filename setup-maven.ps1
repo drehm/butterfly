@@ -34,7 +34,8 @@ if ($javaBin -like "*javapath*") {
     }
     
     if ($jdkDirs) {
-        $javaHome = $jdkDirs | Sort-Object { [version]($_ -replace '[^0-9.]', '') } -Descending | Select-Object -First 1
+        # Sort by directory name (e.g., jdk-24, jdk-23) to get latest
+        $javaHome = $jdkDirs | Sort-Object -Descending | Select-Object -First 1
         Write-Host "[OK] Found actual JDK: $javaHome" -ForegroundColor Green
     } else {
         Write-Host "[ERROR] Could not find JDK installation in C:\Program Files\Java" -ForegroundColor Red
