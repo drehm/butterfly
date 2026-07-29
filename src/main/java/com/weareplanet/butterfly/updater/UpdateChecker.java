@@ -309,21 +309,20 @@ public class UpdateChecker {
     }
 
     public void restartApplication() throws Exception {
-        String javaHome = System.getProperty("java.home");
-        String javaBin = Paths.get(javaHome, "bin", "java").toString();
-        String appJar = getApplicationJar().toString();
-        String[] cmd = {javaBin, "-jar", appJar};
-
+        Path appJar = getApplicationJar();
+        Path launcherScript = appJar.getParent().resolve("launcher.bat");
+         
         UpdateLogger.info("[UPDATE] ");
         UpdateLogger.section("RESTARTING APPLICATION");
-        UpdateLogger.info("[UPDATE] Java executable: " + javaBin);
-        UpdateLogger.info("[UPDATE] JAR to launch: " + appJar);
+        UpdateLogger.info("[UPDATE] Using launcher: " + launcherScript.toAbsolutePath());
+        UpdateLogger.info("[UPDATE] Launcher will handle update installation");
         UpdateLogger.info("[UPDATE] ");
-        UpdateLogger.info("[UPDATE] Executing: " + String.join(" ", cmd));
+        UpdateLogger.info("[UPDATE] Executing: " + launcherScript.toAbsolutePath());
         UpdateLogger.info("[UPDATE] ");
         UpdateLogger.info("[UPDATE] The app will now restart...");
-        
-        new ProcessBuilder(cmd).start();
+         
+        // Launch via launcher.bat which handles file movements
+        new ProcessBuilder(launcherScript.toString()).start();
         System.exit(0);
     }
 

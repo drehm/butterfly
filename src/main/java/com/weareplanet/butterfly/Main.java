@@ -120,8 +120,9 @@ public class Main {
 
      /**
       * Check if there's a pending update to install from a previous session.
-      * This happens BEFORE the UI starts, so the JAR is not yet locked.
-      * @return true if an update was found and is being installed, false otherwise
+      * The actual installation is handled by the launcher.bat script.
+      * We just log the status and exit so the launcher can replace the JAR.
+      * @return true if an update was found and launcher will handle it
       */
      private static boolean checkAndInstallPendingUpdate() {
          try {
@@ -134,82 +135,43 @@ public class Main {
              }
              
              Path appJar = Paths.get(jarPath);
-            
              Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
-            
+             
              UpdateLogger.section("UPDATE INSTALLATION STARTUP CHECK");
              UpdateLogger.info("[UPDATE] Current app JAR: " + appJar.toAbsolutePath());
              UpdateLogger.info("[UPDATE] Checking for pending update: " + pendingJar.toAbsolutePath());
-            
+             
              if (!Files.exists(pendingJar)) {
                  UpdateLogger.info("[UPDATE] No pending update found. App will start normally.");
                  return false;
              }
-
-             try {
-                 UpdateLogger.info("[UPDATE] ");
-                 UpdateLogger.section("PENDING UPDATE DETECTED");
-                 UpdateLogger.info("[UPDATE] Found pending JAR: " + pendingJar.toAbsolutePath());
-                 UpdateLogger.logFile(pendingJar.toAbsolutePath().toString(), "[UPDATE] Pending JAR");
-                 LOGGER.info("Found pending update: " + pendingJar);
-                 
-                 Path backupJar = appJar.resolveSibling(appJar.getFileName() + ".backup");
-                 
-                 UpdateLogger.info("[UPDATE] ");
-                 UpdateLogger.section("STAGE 1: BACKUP CURRENT VERSION");
-                 UpdateLogger.info("[UPDATE] Backing up current JAR:");
-                 UpdateLogger.info("[UPDATE]   FROM: " + appJar.toAbsolutePath());
-                 UpdateLogger.info("[UPDATE]   TO:   " + backupJar.toAbsolutePath());
-                 
-                 // At this point, the old JAR is not locked, so we can replace it
-                 Files.move(appJar, backupJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                 
-                 UpdateLogger.info("[UPDATE] ✓ Backup completed. Original JAR saved.");
-                 
-                 try {
-                     UpdateLogger.info("[UPDATE] ");
-                     UpdateLogger.section("STAGE 2: INSTALL NEW VERSION");
-                     UpdateLogger.info("[UPDATE] Replacing with new JAR:");
-                     UpdateLogger.info("[UPDATE]   FROM: " + pendingJar.toAbsolutePath());
-                     UpdateLogger.info("[UPDATE]   TO:   " + appJar.toAbsolutePath());
-                     
-                     Files.move(pendingJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                     
-                     UpdateLogger.info("[UPDATE] ✓ New JAR installed successfully!");
-                     UpdateLogger.info("[UPDATE] ");
-                     UpdateLogger.section("LAUNCH INFO");
-                     UpdateLogger.info("[UPDATE] Will launch: " + appJar.toAbsolutePath());
-                     UpdateLogger.logFile(appJar.toAbsolutePath().toString(), "[UPDATE] New JAR");
-                     UpdateLogger.info("[UPDATE] ");
-                     
-                     LOGGER.info("Update installed successfully");
-                     return true;
-                 } catch (Exception e) {
-                     UpdateLogger.error("[UPDATE] ✗ INSTALLATION FAILED: " + e.getMessage(), e);
-                     LOGGER.log(Level.SEVERE, "Failed to install new JAR", e);
-                     
-                     // Restore backup if replacement failed
-                     UpdateLogger.info("[UPDATE] ");
-                     UpdateLogger.section("RECOVERY: RESTORING BACKUP");
-                     UpdateLogger.info("[UPDATE] Rolling back to previous version:");
-                     UpdateLogger.info("[UPDATE]   FROM: " + backupJar.toAbsolutePath());
-                     UpdateLogger.info("[UPDATE]   TO:   " + appJar.toAbsolutePath());
-                     
-                     Files.move(backupJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                     
-                     UpdateLogger.info("[UPDATE] ✓ Rollback completed. Launching original version.");
-                     UpdateLogger.info("[UPDATE] ");
-                     throw e;
-                 }
-             } catch (Exception e) {
-                 UpdateLogger.error("[UPDATE] ERROR during update installation: " + e.getMessage(), e);
-                 LOGGER.log(Level.SEVERE, "Failed to install pending update", e);
-                 return false;
-             }
+             
+             UpdateLogger.info("[UPDATE] ");
+             UpdateLogger.section("PENDING UPDATE DETECTED");
+             UpdateLogger.info("[UPDATE] Found pending JAR: " + pendingJar.toAbsolutePath());
+             UpdateLogger.logFile(pendingJar.toAbsolutePath().toString(), "[UPDATE] Pending JAR");
+             LOGGER.info("Found pending update: " + pendingJar);
+             
+             UpdateLogger.info("[UPDATE] ");
+             UpdateLogger.info("[UPDATE] Update will be installed by launcher on next restart.");
+             UpdateLogger.info("[UPDATE] Launcher will:");
+             UpdateLogger.info("[UPDATE]   1. Backup current JAR to .backup");
+             UpdateLogger.info("[UPDATE]   2. Move pending JAR to current JAR location");
+             UpdateLogger.info("[UPDATE]   3. Relaunch the application");
+             UpdateLogger.info("[UPDATE] ");
+             UpdateLogger.info("[UPDATE] Exiting to allow launcher to complete installation...");
+             
+             LOGGER.info("Pending update detected, exiting to allow launcher to install");
+             
+             // Exit so launcher can move files without locking
+             System.exit(0);
+             return true;
+             
          } catch (Exception e) {
-             UpdateLogger.error("[UPDATE] ERROR checking for pending updates: " + e.getMessage(), e);
-             LOGGER.log(Level.SEVERE, "Error checking for pending updates", e);
+             UpdateLogger.error("[UPDATE] Error checking for pending update: " + e.getMessage(), e);
+             LOGGER.log(Level.WARNING, "Error checking for pending update", e);
              return false;
          }
      }
 }
+
