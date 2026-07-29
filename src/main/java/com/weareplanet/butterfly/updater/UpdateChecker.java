@@ -45,18 +45,22 @@ public class UpdateChecker {
         try {
             UpdateInfo updateInfo = fetchUpdateInfo();
             if (updateInfo != null && isNewerVersion(updateInfo.version, currentVersion)) {
+                System.out.println("[UPDATE] Update available: " + updateInfo.version);
                 LOGGER.info("Update available: " + updateInfo.version);
                 if (listener != null) {
                     listener.onUpdateAvailable(updateInfo);
                 }
                 downloadUpdate(updateInfo);
             } else {
+                System.out.println("[UPDATE] Already running latest version: " + currentVersion);
                 LOGGER.info("Already running latest version: " + currentVersion);
                 if (listener != null) {
                     listener.onNoUpdateAvailable();
                 }
             }
         } catch (Exception e) {
+            System.err.println("[UPDATE] Failed to check for updates: " + e.getMessage());
+            e.printStackTrace();
             LOGGER.log(Level.WARNING, "Failed to check for updates", e);
             if (listener != null) {
                 listener.onCheckFailed(e);
@@ -172,6 +176,7 @@ public class UpdateChecker {
             try {
                 Path downloadPath = updateDir.resolve("butterfly-" + updateInfo.version + ".jar");
 
+                System.out.println("[UPDATE] Downloading to: " + downloadPath);
                 if (listener != null) {
                     listener.onDownloadStarted(updateInfo);
                 }
@@ -182,8 +187,11 @@ public class UpdateChecker {
                     listener.onDownloadComplete(updateInfo, downloadPath);
                 }
 
+                System.out.println("[UPDATE] Download complete: " + downloadPath);
                 LOGGER.info("Update downloaded to: " + downloadPath);
             } catch (Exception e) {
+                System.err.println("[UPDATE] Failed to download update: " + e.getMessage());
+                e.printStackTrace();
                 LOGGER.log(Level.WARNING, "Failed to download update", e);
                 if (listener != null) {
                     listener.onDownloadFailed(e);
@@ -194,6 +202,7 @@ public class UpdateChecker {
 
     private void downloadFile(String urlString, Path targetPath) throws Exception {
         URL url = new URL(urlString);
+        System.out.println("[UPDATE] Connecting to: " + urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(CONNECTION_TIMEOUT);
         conn.setReadTimeout(SOCKET_TIMEOUT);
@@ -204,6 +213,8 @@ public class UpdateChecker {
             }
 
             long totalSize = conn.getContentLengthLong();
+            System.out.println("[UPDATE] File size: " + (totalSize > 0 ? totalSize / 1024 + " KB" : "unknown"));
+            
             try (InputStream in = conn.getInputStream();
                  OutputStream out = Files.newOutputStream(targetPath)) {
 
@@ -218,6 +229,7 @@ public class UpdateChecker {
                     if (listener != null && totalSize > 0) {
                         int progress = (int) ((downloaded * 100) / totalSize);
                         listener.onDownloadProgress(progress);
+                        System.out.println("[UPDATE] Progress: " + progress + "%");
                     }
                 }
             }

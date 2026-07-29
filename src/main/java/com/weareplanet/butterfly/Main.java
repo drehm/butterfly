@@ -137,28 +137,41 @@ public class Main {
              }
 
              try {
+                 System.out.println("[UPDATE] Found pending update: " + pendingJar);
                  LOGGER.info("Found pending update: " + pendingJar);
                 
                  Path backupJar = appJar.resolveSibling(appJar.getFileName() + ".backup");
                 
+                 System.out.println("[UPDATE] Backing up current JAR: " + appJar + " -> " + backupJar);
                  // At this point, the old JAR is not locked, so we can replace it
                  Files.move(appJar, backupJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 
                  try {
+                     System.out.println("[UPDATE] Installing new JAR: " + pendingJar + " -> " + appJar);
                      Files.move(pendingJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                     System.out.println("[UPDATE] Update installed successfully!");
                      LOGGER.info("Update installed successfully");
                      return true;
                  } catch (Exception e) {
+                     System.err.println("[UPDATE] Failed to install new JAR: " + e.getMessage());
+                     e.printStackTrace();
+                     LOGGER.log(Level.SEVERE, "Failed to install new JAR", e);
+                    
                      // Restore backup if replacement failed
+                     System.out.println("[UPDATE] Restoring backup...");
                      Files.move(backupJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                      throw e;
                  }
              } catch (Exception e) {
-                 LOGGER.log(Level.WARNING, "Failed to install pending update", e);
+                 System.err.println("[UPDATE] Error during update installation: " + e.getMessage());
+                 e.printStackTrace();
+                 LOGGER.log(Level.SEVERE, "Failed to install pending update", e);
                  return false;
              }
          } catch (Exception e) {
-             LOGGER.log(Level.WARNING, "Error checking for pending updates", e);
+             System.err.println("[UPDATE] Error checking for pending updates: " + e.getMessage());
+             e.printStackTrace();
+             LOGGER.log(Level.SEVERE, "Error checking for pending updates", e);
              return false;
          }
      }
