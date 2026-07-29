@@ -1,0 +1,32 @@
+# Maven
+target/
+.m2/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.eclipse
+.classpath
+.project
+
+# Build
+build/
+dist/
+*.class
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Local
+.env
+local.properties
+*.log
