@@ -121,7 +121,7 @@ public class Main {
       */
      private static boolean checkAndInstallPendingUpdate() {
          try {
-             Path updateDir = Paths.get(System.getProperty("user.home"), ".butterfly", "updates");
+             Path updateDir = Paths.get("update");
              if (!Files.exists(updateDir)) {
                  return false;
              }

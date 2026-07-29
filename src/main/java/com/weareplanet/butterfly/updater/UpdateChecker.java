@@ -28,7 +28,7 @@ public class UpdateChecker {
 
     public UpdateChecker(String currentVersion) {
         this.currentVersion = currentVersion;
-        this.updateDir = Paths.get(System.getProperty("user.home"), ".butterfly", "updates");
+        this.updateDir = Paths.get("update");
         ensureUpdateDirExists();
     }
 
