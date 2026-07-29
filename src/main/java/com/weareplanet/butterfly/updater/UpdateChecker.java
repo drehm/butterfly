@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -227,20 +228,16 @@ public class UpdateChecker {
 
     public void installUpdate(UpdateInfo updateInfo, Path jarPath) throws Exception {
         Path appJar = getApplicationJar();
-        Path backupJar = appJar.resolveSibling(appJar.getFileName() + ".backup");
-
-        Files.move(appJar, backupJar);
-
-        try {
-            Files.move(jarPath, appJar);
-            LOGGER.info("Update installed successfully");
-
-            if (listener != null) {
-                listener.onInstallComplete(updateInfo);
-            }
-        } catch (Exception e) {
-            Files.move(backupJar, appJar);
-            throw e;
+        Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
+        
+        // Don't replace the current JAR (it's locked). Instead, stage it as .pending
+        // The replacement will happen on next startup when the JVM has released the lock
+        Files.move(jarPath, pendingJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        
+        LOGGER.info("Update staged for installation on next startup: " + pendingJar);
+        
+        if (listener != null) {
+            listener.onInstallComplete(updateInfo);
         }
     }
 

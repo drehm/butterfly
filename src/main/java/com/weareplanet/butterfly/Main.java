@@ -117,45 +117,46 @@ public class Main {
 
      /**
       * Check if there's a pending update to install from a previous session.
+      * This happens BEFORE the UI starts, so the JAR is not yet locked.
       * @return true if an update was found and is being installed, false otherwise
       */
      private static boolean checkAndInstallPendingUpdate() {
          try {
-             Path updateDir = Paths.get("update");
-             if (!Files.exists(updateDir)) {
+             Path appJar = Paths.get(UpdateChecker.class.getProtectionDomain()
+                 .getCodeSource().getLocation().toURI().getPath());
+            
+             // Handle Windows URI path with leading slash
+             if (appJar.toString().startsWith("/") && appJar.toString().length() > 2 && appJar.toString().charAt(2) == ':') {
+                 appJar = Paths.get(appJar.toString().substring(1));
+             }
+            
+             Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
+            
+             if (!Files.exists(pendingJar)) {
                  return false;
              }
 
-             // Find any JAR files in the updates directory
-             return Files.list(updateDir)
-                 .filter(p -> p.toString().endsWith(".jar"))
-                 .findFirst()
-                 .map(jarPath -> {
-                     try {
-                         LOGGER.info("Found pending update: " + jarPath);
-                        
-                         // Extract version from filename (butterfly-X.Y.Z.jar)
-                         String fileName = jarPath.getFileName().toString();
-                         // Remove "butterfly-" prefix and ".jar" suffix
-                         String version = fileName.replaceAll("^butterfly-", "").replaceAll("\\.jar$", "");
-                        
-                         UpdateInfo updateInfo = new UpdateInfo();
-                         updateInfo.version = version;
-                         
-                         // Install the update
-                         UpdateChecker checker = new UpdateChecker(APP_VERSION);
-                         checker.installUpdate(updateInfo, jarPath);
-                         
-                         // Restart the application
-                         checker.restartApplication();
-                         
-                         return true;
-                     } catch (Exception e) {
-                         LOGGER.log(Level.WARNING, "Failed to install pending update", e);
-                         return false;
-                     }
-                 })
-                 .orElse(false);
+             try {
+                 LOGGER.info("Found pending update: " + pendingJar);
+                
+                 Path backupJar = appJar.resolveSibling(appJar.getFileName() + ".backup");
+                
+                 // At this point, the old JAR is not locked, so we can replace it
+                 Files.move(appJar, backupJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                
+                 try {
+                     Files.move(pendingJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                     LOGGER.info("Update installed successfully");
+                     return true;
+                 } catch (Exception e) {
+                     // Restore backup if replacement failed
+                     Files.move(backupJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                     throw e;
+                 }
+             } catch (Exception e) {
+                 LOGGER.log(Level.WARNING, "Failed to install pending update", e);
+                 return false;
+             }
          } catch (Exception e) {
              LOGGER.log(Level.WARNING, "Error checking for pending updates", e);
              return false;
