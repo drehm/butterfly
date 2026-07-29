@@ -45,6 +45,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        // Initialize logger first so all output goes to file
+        UpdateLogger.init();
         UpdateLogger.info("Starting " + APP_NAME + " v" + APP_VERSION);
 
         // Check if there's a pending update from previous session

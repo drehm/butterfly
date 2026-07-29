@@ -14,10 +14,17 @@ import java.util.Date;
  * Writes to both console and persistent log file.
  */
 public class UpdateLogger {
-    private static final Path LOG_FILE = initializeLogFile();
+    private static Path LOG_FILE = null;
+    private static boolean INITIALIZED = false;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-    private static Path initializeLogFile() {
+    /**
+     * Initialize the logger. Should be called early in app startup.
+     */
+    public static void init() {
+        if (INITIALIZED) return;
+        INITIALIZED = true;
+        
         try {
             // Log file goes in the same directory as the app JAR
             Path appLocation = Paths.get(UpdateLogger.class.getProtectionDomain()
@@ -29,31 +36,55 @@ public class UpdateLogger {
             }
             
             Path logDir = appLocation.getParent();
-            Path logFile = logDir.resolve("butterfly-updates.log");
+            LOG_FILE = logDir.resolve("butterfly-updates.log");
             
             // Ensure parent directory exists
             Files.createDirectories(logDir);
             
-            return logFile;
+            // Create a blank line separator for new session
+            writeToFile("");
+            
+            // Log startup message
+            String startMessage = formatMessage("[UPDATE] ===== Butterfly Update Log Session Started =====");
+            System.out.println(startMessage);
+            writeToFile(startMessage);
+            
+            String appInfo = formatMessage("[UPDATE] Application: " + appLocation.toAbsolutePath());
+            System.out.println(appInfo);
+            writeToFile(appInfo);
+            
+            String logInfo = formatMessage("[UPDATE] Log file: " + LOG_FILE.toAbsolutePath());
+            System.out.println(logInfo);
+            writeToFile(logInfo);
+            
         } catch (Exception e) {
             System.err.println("[UPDATE] WARNING: Could not initialize log file: " + e.getMessage());
-            return null;
+            e.printStackTrace();
+        }
+    }
+
+    private static void ensureInitialized() {
+        if (!INITIALIZED) {
+            init();
         }
     }
 
     public static void info(String message) {
+        ensureInitialized();
         String formatted = formatMessage(message);
         System.out.println(formatted);
         writeToFile(formatted);
     }
 
     public static void error(String message) {
+        ensureInitialized();
         String formatted = formatMessage(message);
         System.err.println(formatted);
         writeToFile(formatted);
     }
 
     public static void error(String message, Throwable e) {
+        ensureInitialized();
         String formatted = formatMessage(message);
         System.err.println(formatted);
         writeToFile(formatted);
@@ -101,7 +132,9 @@ public class UpdateLogger {
                 LOG_FILE,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.APPEND)) {
-            writer.write(message);
+            if (!message.isEmpty()) {
+                writer.write(message);
+            }
             writer.newLine();
             writer.flush();
         } catch (IOException e) {
