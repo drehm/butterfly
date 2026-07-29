@@ -60,16 +60,26 @@ public class UpdateChecker {
 
     public void checkForUpdates() {
         try {
+            System.out.println("[UPDATE] ");
+            System.out.println("[UPDATE] ===== CHECKING FOR UPDATES =====");
+            System.out.println("[UPDATE] Current version: " + currentVersion);
+            System.out.println("[UPDATE] Update server: " + DEFAULT_UPDATE_SERVER);
+            
             UpdateInfo updateInfo = fetchUpdateInfo();
             if (updateInfo != null && isNewerVersion(updateInfo.version, currentVersion)) {
-                System.out.println("[UPDATE] Update available: " + updateInfo.version);
+                System.out.println("[UPDATE] ");
+                System.out.println("[UPDATE] ===== UPDATE AVAILABLE =====");
+                System.out.println("[UPDATE] New version: " + updateInfo.version);
+                System.out.println("[UPDATE] Download URL: " + updateInfo.downloadUrl);
+                System.out.println("[UPDATE] Release notes: " + (updateInfo.releaseNotes != null ? updateInfo.releaseNotes : "N/A"));
+                System.out.println("[UPDATE] ");
                 LOGGER.info("Update available: " + updateInfo.version);
                 if (listener != null) {
                     listener.onUpdateAvailable(updateInfo);
                 }
                 downloadUpdate(updateInfo);
             } else {
-                System.out.println("[UPDATE] Already running latest version: " + currentVersion);
+                System.out.println("[UPDATE] No update available. Already running latest version.");
                 LOGGER.info("Already running latest version: " + currentVersion);
                 if (listener != null) {
                     listener.onNoUpdateAvailable();
@@ -193,7 +203,13 @@ public class UpdateChecker {
             try {
                 Path downloadPath = updateDir.resolve("butterfly-" + updateInfo.version + ".jar");
 
-                System.out.println("[UPDATE] Downloading to: " + downloadPath);
+                System.out.println("[UPDATE] ");
+                System.out.println("[UPDATE] ===== STARTING DOWNLOAD =====");
+                System.out.println("[UPDATE] Version: " + updateInfo.version);
+                System.out.println("[UPDATE] Source URL: " + updateInfo.downloadUrl);
+                System.out.println("[UPDATE] Download to: " + downloadPath.toAbsolutePath());
+                System.out.println("[UPDATE] ");
+                
                 if (listener != null) {
                     listener.onDownloadStarted(updateInfo);
                 }
@@ -204,10 +220,15 @@ public class UpdateChecker {
                     listener.onDownloadComplete(updateInfo, downloadPath);
                 }
 
-                System.out.println("[UPDATE] Download complete: " + downloadPath);
+                System.out.println("[UPDATE] ");
+                System.out.println("[UPDATE] ===== DOWNLOAD COMPLETE =====");
+                System.out.println("[UPDATE] File: " + downloadPath.toAbsolutePath());
+                System.out.println("[UPDATE] File size: " + Files.size(downloadPath) / 1024 + " KB");
+                System.out.println("[UPDATE] Status: Ready for installation");
+                System.out.println("[UPDATE] ");
                 LOGGER.info("Update downloaded to: " + downloadPath);
             } catch (Exception e) {
-                System.err.println("[UPDATE] Failed to download update: " + e.getMessage());
+                System.err.println("[UPDATE] ✗ DOWNLOAD FAILED: " + e.getMessage());
                 e.printStackTrace();
                 LOGGER.log(Level.WARNING, "Failed to download update", e);
                 if (listener != null) {
@@ -259,15 +280,28 @@ public class UpdateChecker {
         Path appJar = getApplicationJar();
         Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
         
-        System.out.println("[UPDATE] Install stage 1: Moving downloaded JAR to .pending");
-        System.out.println("[UPDATE]   From: " + jarPath.toAbsolutePath());
-        System.out.println("[UPDATE]   To:   " + pendingJar.toAbsolutePath());
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] ===== STAGING INSTALLATION =====");
+        System.out.println("[UPDATE] Staging new JAR for installation on next startup");
+        System.out.println("[UPDATE] Downloaded JAR: " + jarPath.toAbsolutePath());
+        System.out.println("[UPDATE] File size: " + Files.size(jarPath) / 1024 + " KB");
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] Moving to pending state:");
+        System.out.println("[UPDATE]   FROM: " + jarPath.toAbsolutePath());
+        System.out.println("[UPDATE]   TO:   " + pendingJar.toAbsolutePath());
         
         // Don't replace the current JAR (it's locked). Instead, stage it as .pending
         // The replacement will happen on next startup when the JVM has released the lock
         Files.move(jarPath, pendingJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         
-        System.out.println("[UPDATE] Install stage 1 complete! .pending file ready for next startup");
+        System.out.println("[UPDATE] ✓ Pending JAR staged successfully!");
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] ===== INSTALLATION PLAN =====");
+        System.out.println("[UPDATE] On next startup:");
+        System.out.println("[UPDATE]   1. Backup current: " + appJar.toAbsolutePath());
+        System.out.println("[UPDATE]   2. Install new:   " + pendingJar.toAbsolutePath());
+        System.out.println("[UPDATE]   3. Launch:        " + appJar.toAbsolutePath());
+        System.out.println("[UPDATE] ");
         LOGGER.info("Update staged for installation on next startup: " + pendingJar);
         
         if (listener != null) {
@@ -281,6 +315,15 @@ public class UpdateChecker {
         String appJar = getApplicationJar().toString();
         String[] cmd = {javaBin, "-jar", appJar};
 
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] ===== RESTARTING APPLICATION =====");
+        System.out.println("[UPDATE] Java executable: " + javaBin);
+        System.out.println("[UPDATE] JAR to launch: " + appJar);
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] Executing: " + String.join(" ", cmd));
+        System.out.println("[UPDATE] ");
+        System.out.println("[UPDATE] The app will now restart...");
+        
         new ProcessBuilder(cmd).start();
         System.exit(0);
     }

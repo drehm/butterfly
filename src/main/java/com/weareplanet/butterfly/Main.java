@@ -132,44 +132,79 @@ public class Main {
             
              Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
             
+             System.out.println("[UPDATE] ===== UPDATE INSTALLATION STARTUP CHECK =====");
+             System.out.println("[UPDATE] Current app JAR: " + appJar.toAbsolutePath());
+             System.out.println("[UPDATE] Checking for pending update: " + pendingJar.toAbsolutePath());
+            
              if (!Files.exists(pendingJar)) {
+                 System.out.println("[UPDATE] No pending update found. App will start normally.");
                  return false;
              }
 
              try {
-                 System.out.println("[UPDATE] Found pending update: " + pendingJar);
+                 System.out.println("[UPDATE] ");
+                 System.out.println("[UPDATE] ===== PENDING UPDATE DETECTED =====");
+                 System.out.println("[UPDATE] Found pending JAR: " + pendingJar.toAbsolutePath());
+                 System.out.println("[UPDATE] File size: " + Files.size(pendingJar) / 1024 + " KB");
                  LOGGER.info("Found pending update: " + pendingJar);
                 
                  Path backupJar = appJar.resolveSibling(appJar.getFileName() + ".backup");
                 
-                 System.out.println("[UPDATE] Backing up current JAR: " + appJar + " -> " + backupJar);
+                 System.out.println("[UPDATE] ");
+                 System.out.println("[UPDATE] ===== STAGE 1: BACKUP CURRENT VERSION =====");
+                 System.out.println("[UPDATE] Backing up current JAR:");
+                 System.out.println("[UPDATE]   FROM: " + appJar.toAbsolutePath());
+                 System.out.println("[UPDATE]   TO:   " + backupJar.toAbsolutePath());
+                
                  // At this point, the old JAR is not locked, so we can replace it
                  Files.move(appJar, backupJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 
+                 System.out.println("[UPDATE] ✓ Backup completed. Original JAR saved.");
+                
                  try {
-                     System.out.println("[UPDATE] Installing new JAR: " + pendingJar + " -> " + appJar);
+                     System.out.println("[UPDATE] ");
+                     System.out.println("[UPDATE] ===== STAGE 2: INSTALL NEW VERSION =====");
+                     System.out.println("[UPDATE] Replacing with new JAR:");
+                     System.out.println("[UPDATE]   FROM: " + pendingJar.toAbsolutePath());
+                     System.out.println("[UPDATE]   TO:   " + appJar.toAbsolutePath());
+                    
                      Files.move(pendingJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                     System.out.println("[UPDATE] Update installed successfully!");
+                    
+                     System.out.println("[UPDATE] ✓ New JAR installed successfully!");
+                     System.out.println("[UPDATE] ");
+                     System.out.println("[UPDATE] ===== LAUNCH INFO =====");
+                     System.out.println("[UPDATE] Will launch: " + appJar.toAbsolutePath());
+                     System.out.println("[UPDATE] File size: " + Files.size(appJar) / 1024 + " KB");
+                     System.out.println("[UPDATE] ");
+                    
                      LOGGER.info("Update installed successfully");
                      return true;
                  } catch (Exception e) {
-                     System.err.println("[UPDATE] Failed to install new JAR: " + e.getMessage());
+                     System.err.println("[UPDATE] ✗ INSTALLATION FAILED: " + e.getMessage());
                      e.printStackTrace();
                      LOGGER.log(Level.SEVERE, "Failed to install new JAR", e);
                     
                      // Restore backup if replacement failed
-                     System.out.println("[UPDATE] Restoring backup...");
+                     System.out.println("[UPDATE] ");
+                     System.out.println("[UPDATE] ===== RECOVERY: RESTORING BACKUP =====");
+                     System.out.println("[UPDATE] Rolling back to previous version:");
+                     System.out.println("[UPDATE]   FROM: " + backupJar.toAbsolutePath());
+                     System.out.println("[UPDATE]   TO:   " + appJar.toAbsolutePath());
+                    
                      Files.move(backupJar, appJar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    
+                     System.out.println("[UPDATE] ✓ Rollback completed. Launching original version.");
+                     System.out.println("[UPDATE] ");
                      throw e;
                  }
              } catch (Exception e) {
-                 System.err.println("[UPDATE] Error during update installation: " + e.getMessage());
+                 System.err.println("[UPDATE] ERROR during update installation: " + e.getMessage());
                  e.printStackTrace();
                  LOGGER.log(Level.SEVERE, "Failed to install pending update", e);
                  return false;
              }
          } catch (Exception e) {
-             System.err.println("[UPDATE] Error checking for pending updates: " + e.getMessage());
+             System.err.println("[UPDATE] ERROR checking for pending updates: " + e.getMessage());
              e.printStackTrace();
              LOGGER.log(Level.SEVERE, "Error checking for pending updates", e);
              return false;
