@@ -2,24 +2,38 @@
 
 Quick reference for releasing a new version.
 
-## 5-Minute Release Process
+## Release Process (7 Steps)
 
 ```bash
-# 1. Edit pom.xml - change version from X.Y.Z to NEW.VERSION
+# 1. Edit pom.xml - change version to NEW.VERSION
 #    Example: 0.0.0.1 → 0.0.0.2
 
-# 2. Commit
-git add pom.xml
+# 2. Commit ALL changes (not just pom.xml)
+git add .
 git commit -m "Bump version to NEW.VERSION"
-git push
 
-# 3. Build
+# 3. Push to GitHub
+git push origin main
+
+# 4. Build
 mvn clean package -DskipTests
 
-# 4. Release (replace NEW.VERSION with your version)
+# 5. Create git tag (marks this commit as a release)
+git tag -a vNEW.VERSION -m "Release version NEW.VERSION"
+git push origin vNEW.VERSION
+
+# 6. Create GitHub release (upload JAR)
 gh release create vNEW.VERSION target/butterfly-NEW.VERSION.jar
 
-# 5. Verify
+# 7. Verify
+gh release view vNEW.VERSION
+```
+
+### Quick Version (if tag auto-created is ok)
+
+```bash
+# Steps 1-4 above, then:
+gh release create vNEW.VERSION target/butterfly-NEW.VERSION.jar
 gh release view vNEW.VERSION
 ```
 
@@ -29,6 +43,26 @@ gh release view vNEW.VERSION
 - ✅ JAR filename in `pom.xml`
 - ✅ UpdateChecker gets correct version
 - ✅ GitHub release asset available
+- ✅ Git tag created (marks this commit as release point)
+
+## Why Push ALL Changes First?
+
+- **Backup:** All code is backed up on GitHub
+- **History:** Team sees full commit history
+- **Tag reference:** Git tag points to complete release commit
+- **CI/CD:** Automated pipelines can see all changes
+- **Reverting:** Easier to rollback if needed
+
+**Don't just commit pom.xml** - include any other changes in the same commit.
+
+## Git Tag: Explicit vs Auto
+
+| Method | Command | Pros | Cons |
+|--------|---------|------|------|
+| **Explicit** | `git tag -a vX.Y.Z` + `git push origin vX.Y.Z` | Shows in git log, explicit record | Extra steps |
+| **Auto** | `gh release create vX.Y.Z` (tag auto-created) | Fewer steps, still works | Less visible in git |
+
+**Use explicit tags for production.** They appear in `git log`, `git tag -l`, and `git describe`.
 
 ## Common Versions
 

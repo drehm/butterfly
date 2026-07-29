@@ -26,17 +26,40 @@ Example versions:
 
 The version automatically syncs to `Main.java` via Maven resource filtering.
 
-### Step 2: Commit Version Change
+### Step 2: Commit All Changes
+
+First, make sure all code changes are committed (not just pom.xml):
 
 ```bash
-git add pom.xml
+# Review changes
+git status
+
+# Stage all changes (or specific files)
+git add .
+
+# Commit with version bump message
 git commit -m "Bump version to X.Y.Z
 
+- Update pom.xml with new version
+- All changes ready for release
+
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
-git push
 ```
 
-### Step 3: Build the Application
+### Step 3: Push to GitHub
+
+Push all commits to main branch:
+
+```bash
+git push origin main
+```
+
+This ensures:
+- All changes are backed up on GitHub
+- Release tag will be created from the latest commit
+- Other team members have the code
+
+### Step 4: Build the Application
 
 Clean build with Maven:
 
@@ -50,15 +73,29 @@ This creates:
 
 Verify the build succeeded with no errors.
 
-### Step 4: Create GitHub Release
+### Step 5: Create Git Tag (Optional but Recommended)
 
-Create a release tag and upload the JAR:
+Explicitly create a git tag for this release:
 
 ```bash
-# Create the release with tag vX.Y.Z
+# Create annotated tag (recommended)
+git tag -a vX.Y.Z -m "Release version X.Y.Z"
+
+# Push tag to GitHub
+git push origin vX.Y.Z
+```
+
+This marks this specific commit as a release point in git history.
+
+### Step 6: Create GitHub Release
+
+Create a GitHub release and upload the JAR. The tag can already exist (from Step 5) or `gh` will create it:
+
+```bash
+# Create the release with tag vX.Y.Z and upload JAR
 gh release create vX.Y.Z \
   --title "vX.Y.Z" \
-  --notes "Release notes describing changes" \
+  --notes "Release notes describing changes and improvements" \
   target/butterfly-X.Y.Z.jar
 ```
 
@@ -68,9 +105,18 @@ Or without release notes:
 gh release create vX.Y.Z target/butterfly-X.Y.Z.jar
 ```
 
-### Step 5: Verify the Release
+Or if tag already exists (from Step 5):
 
-Check that the release is available:
+```bash
+gh release create vX.Y.Z \
+  --target main \
+  --notes "Release notes" \
+  target/butterfly-X.Y.Z.jar
+```
+
+### Step 7: Verify the Release
+
+Check that the release is available on GitHub:
 
 ```bash
 gh release view vX.Y.Z
@@ -79,28 +125,64 @@ gh release view vX.Y.Z
 Should show:
 - ✓ Tag name: `vX.Y.Z`
 - ✓ Asset: `butterfly-X.Y.Z.jar`
-- ✓ Status: Published
+- ✓ Status: Published (not draft)
+- ✓ Created from: Latest commit on main branch
 
 ## Full Command Sequence
 
-Here's the complete command sequence to copy/paste (replace X.Y.Z with your version):
+Here's the complete command sequence for a release (replace X.Y.Z with your version):
+
+### Option A: Recommended (with explicit git tag)
 
 ```bash
-# 1. Update pom.xml version (manual edit or script)
+# 1. Update pom.xml (manual edit)
 $version = "X.Y.Z"
 
-# 2. Build
+# 2. Commit ALL changes
+git add .
+git commit -m "Bump version to X.Y.Z"
+
+# 3. Push to GitHub
+git push origin main
+
+# 4. Build
 mvn clean package -DskipTests
 
-# 3. Create release
+# 5. Create git tag
+git tag -a v$version -m "Release version $version"
+git push origin v$version
+
+# 6. Create GitHub release
 gh release create v$version `
   --title "v$version" `
   --notes "Release notes here" `
   target/butterfly-$version.jar
 
+# 7. Verify
+gh release view v$version
+```
+
+### Option B: Quick (gh creates tag automatically)
+
+```bash
+$version = "X.Y.Z"
+
+# 1. Update pom.xml, commit, push
+git add .
+git commit -m "Bump version to X.Y.Z"
+git push origin main
+
+# 2. Build
+mvn clean package -DskipTests
+
+# 3. Create release (tag created automatically)
+gh release create v$version target/butterfly-$version.jar
+
 # 4. Verify
 gh release view v$version
 ```
+
+**Recommendation:** Use **Option A** (with explicit git tag) for production releases. The explicit tag makes the release point visible in `git log` and `git tag`, which is useful for reverting and tracking history.
 
 ## Auto-Update Testing
 
