@@ -1,6 +1,6 @@
-# Butterfly - Payment Terminal Management Application
+# Butterfly - Generic Test Tool
 
-A professional Java application for managing payment terminals with built-in **GitHub-based auto-update support** (similar to Firefly's electron-updater).
+A professional Java application containing generic test tools with built-in **GitHub-based auto-update support**.
 
 ## Features
 
@@ -23,12 +23,12 @@ A professional Java application for managing payment terminals with built-in **G
 mvn clean package
 ```
 
-This creates: `target/butterfly-1.0.0.jar`
+This creates: `target/butterfly-0.0.0.1.jar`
 
 ### Run
 
 ```bash
-java -jar target/butterfly-1.0.0.jar
+java -jar target/butterfly-0.0.0.1.jar
 ```
 
 ## Project Structure
@@ -96,7 +96,7 @@ Then rebuild:
 mvn clean package
 ```
 
-Upload `target/butterfly-1.0.0.jar` to GitHub release.
+Upload `target/butterfly-0.0.0.1.jar` to GitHub release.
 
 ## Building for Release
 
@@ -105,10 +105,10 @@ Upload `target/butterfly-1.0.0.jar` to GitHub release.
 mvn clean package -DskipTests
 
 # JAR is created at:
-target/butterfly-1.0.0.jar
+target/butterfly-0.0.0.1.jar
 
 # Upload to GitHub release (with release notes)
-gh release create v1.0.1 --title "v1.0.1" --notes "Bug fixes and improvements" target/butterfly-1.0.0.jar
+gh release create v0.0.0.1 --title "v0.0.0.1" --notes "Initial release" target/butterfly-0.0.0.1.jar
 ```
 
 ## Configuration
@@ -148,7 +148,7 @@ This project implements **Firefly-like auto-updates** for Java:
 
 ### JAR won't run
 ```bash
-java -jar butterfly-1.0.0.jar
+java -jar butterfly-0.0.0.1.jar
 # Check console output for errors
 ```
 
@@ -170,7 +170,7 @@ ls ~/.butterfly/updates/
 
 To add features to Butterfly:
 1. Edit source in `src/main/java/`
-2. Test locally: `mvn clean package && java -jar target/butterfly-1.0.0.jar`
+2. Test locally: `mvn clean package && java -jar target/butterfly-0.0.0.1.jar`
 3. Commit changes
 4. Create GitHub release with version bump
 

@@ -3,14 +3,39 @@ package com.weareplanet.butterfly;
 import com.weareplanet.butterfly.updater.UpdateChecker;
 import com.weareplanet.butterfly.updater.UpdateInfo;
 import com.weareplanet.butterfly.ui.MainWindow;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * Main entry point for Butterfly application.
  * Initializes the application and auto-updater system.
  */
 public class Main {
-    private static final String APP_VERSION = "0.0.0.1";
     private static final String APP_NAME = "Butterfly";
+    private static String APP_VERSION;
+
+    static {
+        // Load version from properties file (injected by Maven)
+        APP_VERSION = loadAppVersion();
+    }
+
+    private static String loadAppVersion() {
+        try {
+            Properties props = new Properties();
+            try (InputStream is = Main.class.getResourceAsStream("/app.properties")) {
+                if (is != null) {
+                    props.load(is);
+                    String version = props.getProperty("app.version");
+                    if (version != null && !version.isEmpty() && !version.startsWith("${")) {
+                        return version;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load version from properties: " + e.getMessage());
+        }
+        return "unknown";
+    }
 
     public static void main(String[] args) {
         System.out.println("Starting " + APP_NAME + " v" + APP_VERSION);
