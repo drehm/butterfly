@@ -26,8 +26,17 @@ public class UpdateLogger {
         INITIALIZED = true;
         
         try {
-            // HARDCODED PATH FOR DEBUGGING
-            Path logDir = Paths.get("C:\\Users\\drehm\\Downloads\\But");
+            // Log file goes in the same directory as the app JAR
+            String jarPath = UpdateLogger.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath();
+            
+            // Handle Windows URI path with leading slash BEFORE calling Paths.get()
+            if (jarPath.startsWith("/") && jarPath.length() > 2 && jarPath.charAt(2) == ':') {
+                jarPath = jarPath.substring(1);
+            }
+            
+            Path appLocation = Paths.get(jarPath);
+            Path logDir = appLocation.getParent();
             LOG_FILE = logDir.resolve("butterfly-updates.log");
             
             // Ensure parent directory exists
