@@ -32,14 +32,15 @@ public class UpdateChecker {
         // Use absolute path relative to application JAR location
         Path dir = null;
         try {
-            Path appLocation = Paths.get(UpdateChecker.class.getProtectionDomain()
-                .getCodeSource().getLocation().toURI().getPath());
+            String jarPath = UpdateChecker.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath();
             
-            // Handle Windows URI path with leading slash
-            if (appLocation.toString().startsWith("/") && appLocation.toString().length() > 2 && appLocation.toString().charAt(2) == ':') {
-                appLocation = Paths.get(appLocation.toString().substring(1));
+            // Handle Windows URI path with leading slash BEFORE calling Paths.get()
+            if (jarPath.startsWith("/") && jarPath.length() > 2 && jarPath.charAt(2) == ':') {
+                jarPath = jarPath.substring(1);
             }
             
+            Path appLocation = Paths.get(jarPath);
             dir = appLocation.getParent().resolve("update");
         } catch (Exception e) {
             // Fallback to relative path if we can't determine app location

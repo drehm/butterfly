@@ -125,13 +125,15 @@ public class Main {
       */
      private static boolean checkAndInstallPendingUpdate() {
          try {
-             Path appJar = Paths.get(UpdateChecker.class.getProtectionDomain()
-                 .getCodeSource().getLocation().toURI().getPath());
-            
-             // Handle Windows URI path with leading slash
-             if (appJar.toString().startsWith("/") && appJar.toString().length() > 2 && appJar.toString().charAt(2) == ':') {
-                 appJar = Paths.get(appJar.toString().substring(1));
+             String jarPath = UpdateChecker.class.getProtectionDomain()
+                 .getCodeSource().getLocation().toURI().getPath();
+             
+             // Handle Windows URI path with leading slash BEFORE calling Paths.get()
+             if (jarPath.startsWith("/") && jarPath.length() > 2 && jarPath.charAt(2) == ':') {
+                 jarPath = jarPath.substring(1);
              }
+             
+             Path appJar = Paths.get(jarPath);
             
              Path pendingJar = appJar.resolveSibling(appJar.getFileName() + ".pending");
             
